@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 # All different training schemes that run_training.py accesses are bundled here
 # not all of them require all arguments (e.g. epsilon) 
 # but this way one can keep a constistent interface
@@ -252,58 +252,6 @@ def train_CEDA_gmm_out(model, device, train_loader, optimizer, epoch,
             likelihood_loss / len(train_loader.dataset))
 
 
-# ACET as introduced in https://arxiv.org/pdf/1812.05720.pdf
-def train_ACET(model, device, train_loader, optimizer, epoch, 
-               lam=1., verbose=-1, noise_loader=None, epsilon=.3):
-    criterion = nn.NLLLoss()
-    model.train()
-    
-    train_loss = 0
-    correct = 0
-    
-    p_in = torch.tensor(1. / (1. + lam), device=device, dtype=torch.float)
-    p_out = torch.tensor(lam, device=device, dtype=torch.float) * p_in
-    
-    
-    for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
-        
-        
-        if noise_loader is not None:
-            noise = next(noise_loader)[0].to(device)
-        else:
-            noise = torch.rand_like(data)
-            
-        noise, _ = adv.gen_adv_noise(model, device, noise.clone(), 
-                                     epsilon=epsilon, steps=40, step_size=0.1)
-        
-        model.train()
-        
-        full_data = torch.cat([data, noise], 0)
-        full_out = model(full_data)
-        
-        output = full_out[:data.shape[0]]
-        output_adv = full_out[data.shape[0]+1:]
-        
-        
-        loss1 = criterion(output, target)
-        loss2 = output_adv.max(1)[0].mean()
-        
-        loss = p_in*loss1 + p_out*loss2
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-        train_loss += loss.item()
-        _, predicted = output.max(1)
-        correct += predicted.eq(target).sum().item()
-        if (batch_idx % verbose == 0) and verbose>0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
-    return train_loss/len(train_loader.dataset), correct/len(train_loader.dataset), 0.
-
 
 def test(model, device, test_loader, min_conf=.1):
     model.eval()
@@ -325,5 +273,36 @@ def test(model, device, test_loader, min_conf=.1):
     correct /= len(test_loader.dataset)
     
     return correct, av_conf, test_loss
+
+
+def plot_conf(net,
+              data,
+              labels,
+              device = None):
+    """
+    net: takes in classifier network
+    data: tensor with input data (expected normalized [0,1])
+    labels: true label values for plotting
+    device: torch device for training
+    """
+    x = y = np.arange(-.03, 1.03, 0.01)
+    points = []
+    for xx in x:
+        for yy in y:
+            points.append([xx, yy])
+    dim = len(x)
+    output = net(torch.tensor(points, dtype=torch.float32, device=device)).detach()
+    output_data = net(data.to(device)).detach().cpu()
+    pred = output.max(1)[0].exp()
+    z = pred.view(dim, dim).detach().t().cpu().numpy()
+    # COLORS FOR CLASSES IN CLASS VS OOD
+    p, yhat = output_data.max(1)
+    p = p.exp()
+    acc = (yhat.eq(labels)).sum() / len(labels)
+
+    plt.contourf(x, y, z, vmin=.5, vmax=1, extend='both', cmap='bone', zorder=0)
+    plt.colorbar()  # ticks=np.linspace(.5,1.,6))
+    sns.scatterplot(x=data[:, 0], y=data[:, 1], hue=yhat)
+    plt.title(f'Accuracy:{acc:.3f}')
 
 
