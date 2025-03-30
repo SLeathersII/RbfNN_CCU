@@ -92,7 +92,7 @@ def plot_conf(net, data, axM, device, labels, modelstr, legend, points=points):
     axM.scatter(data[:, 0][yhat == 3].cpu(), data[:, 1][yhat.cpu() == 3].cpu(), s=3,
                 color=colors[yhat[yhat == 3]], label="OOD")
     if legend:
-        axM.legend(markerscale=4, bbox_to_anchor=(1.3,1.24), ncols=2)
+        axM.legend(markerscale=4, bbox_to_anchor=(1.3,1.24), ncols=2 )
     axM.set_xlim(0, 1)
     axM.set_ylim(0, 1)
     #plt.xticks([])
@@ -314,6 +314,6 @@ ani = animation.FuncAnimation(f3, animate_all, frames=500, repeat=False)
 #plt.show()
 # To save the animation using Pillow as a gif
 writer = animation.PillowWriter(fps=5,
-                                 metadata=dict(artist='Me'),
+                                 metadata=dict(artist='SLeathersII'),
                                  bitrate=1800)
 ani.save('MC_ALL.gif', writer=writer)

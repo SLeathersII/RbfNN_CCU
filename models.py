@@ -233,7 +233,11 @@ class MixtureModel(nn.Module):
         self.alpha =  nn.Parameter(alpha)
 
         
-    def find_solution(self, X, initialize=True, iterate=True, use_kmeans=True, verbose=False):
+    def find_solution(self, X, initialize=True,
+                      iterate=True,
+                      use_kmeans=True,
+                      verbose=False,
+                      collect_z=False):
         assert X.device==self.mu.device, 'Data stored on ' + str(X.device) + ' but model on ' + str(self.mu.device)
         
         with torch.no_grad():
@@ -263,9 +267,17 @@ class MixtureModel(nn.Module):
                 self.alpha.data = self.alpha.data.log()
 
                 self.logvarbound = (X.var() / m).log()
-
+            if collect_z:
+                z = []
+                x = y = np.arange(-.03, 1.03, 0.01)
+                points = []
+                for xx in x:
+                    for yy in y:
+                        points.append([xx, yy])
+                z.append((torch.logsumexp(self.forward(torch.tensor(points)),
+                                         dim=0).detach().view(len(x), len(y)).T, self.mu.data))
             if iterate:
-                for i in range(50):
+                for i in range(250):
                     mu_prev = self.mu.clone().detach()
                     logvar_prev = self.logvar.clone().detach()
                     alpha_prev = self.alpha.clone().detach()
@@ -281,9 +293,13 @@ class MixtureModel(nn.Module):
                         print((mu_prev-self.mu).abs().max())
                         print((logvar_prev-self.logvar).abs().max())
                         print((alpha_prev-self.alpha).abs().max())
+                    if collect_z:
+                        z.append((torch.logsumexp(self.forward(torch.tensor(points)),
+                                                 dim=0).detach().view(len(x), len(y)).T, self.mu.data))
                     if delta<10e-6:
                         break
-
+        if collect_z:
+            return z
             
 class GMM(MixtureModel):
     def __init__(self, K, D, mu=None, logvar=None, alpha=None, metric=LpMetric(), quantized: bool=False):
