@@ -92,7 +92,7 @@ def plot_conf(net, data, axM, device, labels, modelstr, legend, points=points):
     axM.scatter(data[:, 0][yhat == 3].cpu(), data[:, 1][yhat.cpu() == 3].cpu(), s=3,
                 color=colors[yhat[yhat == 3]], label="OOD")
     if legend:
-        axM.legend(markerscale=4, bbox_to_anchor=(1.3,1.24), ncols=2 )
+        axM.legend(markerscale=4, bbox_to_anchor=(1.3,1.24), ncols=2)
     axM.set_xlim(0, 1)
     axM.set_ylim(0, 1)
     #plt.xticks([])
