@@ -14,3 +14,5 @@ __pycache__/models.cpython-311.pyc
 /__pycache__
 *.pyc
 rbf_layer/__pycache__/__init__.cpython-311.pyc
+__pycache__/models.cpython-311.pyc
+__pycache__/traintest.cpython-311.pyc
