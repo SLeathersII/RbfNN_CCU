@@ -31,5 +31,8 @@ on our two moons data set.
 Where from the above we can see that the RBF kernels do not have the stability seen from the EM algorithm. This comes 
 the two competing optimizations. 
 
+Fixing the centers,based on the GMM centers, and learning the RBF looks like the below.
+![RBF_GMM_Centers](Kernel_GMM_centers.gif)
+
 
 Implement beyond spherical variance for clusters and modify distance metrics. 

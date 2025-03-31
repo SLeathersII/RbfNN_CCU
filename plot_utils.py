@@ -128,11 +128,13 @@ def _animate_rbf(frame,
     kernel_map(rbf, df, ax=ax) # draw step
     ax.title.set_text(f'Kernel Learning\nEpoch: {frame}')# replace title
 def animate_rbf(rbfs,
-                df):
+                df,
+                title=' '):
     fig, ax = plt.subplots()
     ani = animation.FuncAnimation(fig, partial(_animate_rbf, rbfs=rbfs, df=df, ax=ax),
                                   frames=len(rbfs), repeat=False)
     writer = animation.PillowWriter(fps=5,
                                     metadata=dict(artist='SLeathersII'),
                                     bitrate=1800)
-    ani.save('Kernel.gif', writer=writer)
+
+    ani.save(f'Kernel{title}.gif', writer=writer)
