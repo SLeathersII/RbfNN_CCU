@@ -222,6 +222,8 @@ class RBFLayer(nn.Module):
                                   self.num_kernels) * rbfs.view(
                                       batch_size, 1, self.num_kernels)
 
+        #out = rbfs
+
         return out.sum(dim=-1)
 
     @property

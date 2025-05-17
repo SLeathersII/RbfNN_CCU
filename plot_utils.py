@@ -12,7 +12,10 @@ def plot_conf(net,
               labels,
               ax = None,
               device = None,
-              title: str = ''):
+              title: str = '',
+              domain: tuple = (-.03, 1.03),
+              grid_size: float = .01,
+              ):
     """
     net: takes in classifier network
     data: tensor with input data (expected normalized [0,1])
@@ -20,7 +23,7 @@ def plot_conf(net,
     ax: axis to plot on if doing a subplot
     device: torch device for training
     """
-    x = y = np.arange(-.03, 1.03, 0.01)
+    x = y = np.arange(domain[0], domain[1], grid_size)
     points = []
     for xx in x:
         for yy in y:
@@ -69,7 +72,9 @@ def kernel_map(rbf,
     X, Y = np.meshgrid(x2, y2)
     for i in range(len(kernels)):
         center = kernels[i][:, None].repeat(rep, axis=1).T
-        zs = np.array(radial_f(torch.tensor(shapes[i].repeat(rep)) * norm(torch.tensor(center.T - [X.ravel(), Y.ravel()]), dim=0)))
+        zs = np.array(radial_f(
+            torch.tensor(shapes[i].repeat(rep)) * norm(torch.tensor(center.T - [X.ravel(), Y.ravel()]),
+                                                                          dim=0)))
         Z = zs.reshape(X.shape)
         CS = ax.contour(X, Y, Z)
         ax.clabel(CS, inline=True, fontsize=10)

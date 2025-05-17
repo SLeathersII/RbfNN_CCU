@@ -38,8 +38,38 @@ def train_plain(model, device, train_loader, optimizer, epoch,
     if verbose>0:
         print(f'Train Epoch: {epoch} [{correct}/{1000} ({correct/10:.0f}%)]\tLoss: {train_loss:.6f}')
     return train_loss/len(train_loader.dataset), correct/len(train_loader.dataset), 0.
-  
-    
+
+
+def train_rbf_vol(model, device, train_loader, optimizer, epoch,
+                lam=1., verbose=100):
+    # lam not necessarily needed but there to ensure that the
+    # learning rates on the base and the CEDA model are comparable
+
+    criterion = nn.NLLLoss()
+    model.train()
+
+    train_loss = 0
+    correct = 0
+
+    p_in = torch.tensor(1. / (1. + lam), device=device, dtype=torch.float)
+
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        output = model(data)
+
+        loss = p_in * criterion(output, target) + model.rbf.get_shapes.sum()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        train_loss += loss.item()
+        _, predicted = output.max(1)
+        correct += predicted.eq(target).sum().item()
+    if verbose > 0:
+        print(f'Train Epoch: {epoch} [{correct}/{1000} ({correct / 10:.0f}%)]\tLoss: {train_loss:.6f}')
+    return train_loss / len(train_loader.dataset), correct / len(train_loader.dataset), 0.
+
 # CEDA as introduced in https://arxiv.org/pdf/1812.05720.pdf
 # uses either uniform noise or noise_loader
 # not used in paper because conceptually identical to outlier-exposure https://arxiv.org/abs/1812.04606
